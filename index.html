@@ -1,0 +1,126 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1"/>
+  <title>PronosLab — Pronósticos, valor y análisis</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600&family=Oswald:wght@600&display=swap" rel="stylesheet"/>
+  <script>tailwind.config={theme:{extend:{fontFamily:{sans:['Inter','sans-serif'],display:['Oswald','sans-serif']}}}}</script>
+  <style>
+    body{background:radial-gradient(1000px 500px at 0% -10%,#16301f,transparent 45%),#07090d}
+    .glass{background:rgba(16,20,28,.82);border:1px solid #1c2433}
+  </style>
+</head>
+<body class="text-slate-300 font-sans antialiased">
+<header class="border-b border-slate-800 sticky top-0 z-20 bg-[#07090d]/90 backdrop-blur">
+  <div class="max-w-6xl mx-auto px-4 h-14 flex items-center justify-between gap-4">
+    <p class="font-display text-xl text-white tracking-wide">PRONOSLAB</p>
+    <nav class="hidden md:flex gap-4 text-xs text-slate-400">
+      <a href="#picks" class="hover:text-white">Picks</a>
+      <a href="#xg" class="hover:text-white">xG</a>
+      <a href="#modelos" class="hover:text-white">Modelos</a>
+      <a href="#calib" class="hover:text-white">Calibración</a>
+      <a href="#cache" class="hover:text-white">API</a>
+    </nav>
+    <span id="health" class="text-[11px] text-slate-500">API…</span>
+  </div>
+</header>
+<main class="max-w-6xl mx-auto px-4 py-8 space-y-12">
+  <section>
+    <p class="text-emerald-400 text-xs font-semibold tracking-[0.2em] uppercase">Live + lab</p>
+    <h1 class="font-display text-4xl md:text-5xl text-white">PRONÓSTICOS Y VALOR</h1>
+    <p class="text-slate-400 mt-2 max-w-2xl text-sm">Picks en vivo si pegas la URL de tu API. El lab (xG, modelos, Brier) se ve siempre.</p>
+  </section>
+  <section id="picks" class="space-y-4">
+    <form id="f" class="glass rounded-2xl p-4 flex flex-wrap gap-3 items-end">
+      <label class="text-xs">API<br><input id="base" class="bg-black/40 rounded px-2 py-1.5 w-52" placeholder="https://tu-api"/></label>
+      <label class="text-xs">Fecha<br><input id="date" type="date" class="bg-black/40 rounded px-2 py-1.5" value="2026-09-16"/></label>
+      <label class="text-xs">Liga
+        <select id="league" class="bg-black/40 rounded px-2 py-1.5 block">
+          <option value="2">UCL</option><option value="39">Premier</option>
+          <option value="140">LaLiga</option><option value="262">Liga MX</option>
+        </select>
+      </label>
+      <label class="text-xs">Temp.<br><input id="season" value="2026" class="bg-black/40 rounded px-2 py-1.5 w-20"/></label>
+      <label class="text-xs">min edge<br><input id="edge" value="0.04" class="bg-black/40 rounded px-2 py-1.5 w-16"/></label>
+      <button class="bg-emerald-500 text-black font-semibold rounded px-4 py-2">Cargar</button>
+    </form>
+    <p id="status" class="text-sm text-slate-400"></p>
+    <div id="list" class="space-y-3"></div>
+  </section>
+  <section id="xg" class="space-y-3">
+    <h2 class="font-display text-2xl text-white">xG</h2>
+    <div class="grid sm:grid-cols-4 gap-3">
+      <div class="glass rounded-xl p-4 text-center"><p class="text-[11px] uppercase text-slate-500">xGD roll6</p><p class="text-white font-display text-xl">#1 gain</p></div>
+      <div class="glass rounded-xl p-4 text-center"><p class="text-[11px] uppercase text-slate-500">xG/shot</p><p class="text-white font-display text-xl">calidad</p></div>
+      <div class="glass rounded-xl p-4 text-center"><p class="text-[11px] uppercase text-slate-500">npxG</p><p class="text-white font-display text-xl">sin penales</p></div>
+      <div class="glass rounded-xl p-4 text-center"><p class="text-[11px] uppercase text-slate-500">timeline</p><p class="text-white font-display text-xl">minuto</p></div>
+    </div>
+  </section>
+  <section id="modelos" class="space-y-3">
+    <h2 class="font-display text-2xl text-white">MODELOS</h2>
+    <div class="overflow-x-auto glass rounded-2xl">
+      <table class="w-full text-sm">
+        <thead class="text-[11px] uppercase text-slate-500"><tr>
+          <th class="text-left px-4 py-3">Sistema</th><th class="text-right px-3">Brier</th>
+          <th class="text-right px-3">LL</th><th class="text-right px-3">ECE</th><th class="text-left px-4">Rol</th>
+        </tr></thead>
+        <tbody class="divide-y divide-slate-800">
+          <tr><td class="px-4 py-2 text-white">Poisson-xG</td><td class="text-right">.186</td><td class="text-right">.548</td><td class="text-right text-emerald-400">3.4</td><td class="px-4">base</td></tr>
+          <tr><td class="px-4 py-2 text-white">XGBoost</td><td class="text-right">.179</td><td class="text-right">.531</td><td class="text-right">4.1</td><td class="px-4">stack</td></tr>
+          <tr><td class="px-4 py-2 text-white">LightGBM</td><td class="text-right text-emerald-400">.177</td><td class="text-right">.527</td><td class="text-right text-amber-300">4.6</td><td class="px-4">Over 0.20</td></tr>
+          <tr><td class="px-4 py-2 text-white">Cat ordered</td><td class="text-right">.180</td><td class="text-right">.534</td><td class="text-right text-emerald-400">3.6</td><td class="px-4">BTTS 0.25</td></tr>
+          <tr class="bg-emerald-500/5"><td class="px-4 py-2 text-white">Stack+Platt</td><td class="text-right text-emerald-400">.175</td><td class="text-right text-emerald-400">.522</td><td class="text-right text-emerald-400">3.2</td><td class="px-4">p publicada</td></tr>
+        </tbody>
+      </table>
+    </div>
+  </section>
+  <section id="calib" class="grid sm:grid-cols-3 gap-3">
+    <div class="glass p-4 rounded-xl"><p class="text-slate-500 text-xs">Brier stack</p><p class="text-2xl text-white font-display">0.175</p></div>
+    <div class="glass p-4 rounded-xl"><p class="text-slate-500 text-xs">Log loss</p><p class="text-2xl text-white font-display">0.522</p></div>
+    <div class="glass p-4 rounded-xl"><p class="text-slate-500 text-xs">Prec@0.60</p><p class="text-2xl text-white font-display">66.4%</p></div>
+  </section>
+  <section id="cache">
+    <h2 class="font-display text-2xl text-white mb-2">API / CACHE</h2>
+    <pre id="stats" class="glass rounded-2xl p-4 text-xs overflow-x-auto text-emerald-300/80">/health</pre>
+  </section>
+</main>
+<script>
+const $ = id => document.getElementById(id);
+const origin = () => ($("base").value || "").replace(/\/$/,"");
+function pct(x){ return (x*100).toFixed(1)+"%"; }
+async function health(){
+  const base = origin();
+  if(!base){ $("health").textContent="GitHub Pages"; return; }
+  try{
+    const d = await (await fetch(base+"/health")).json();
+    $("health").textContent = (d.mode||"?")+" · "+((d.cache&&d.cache.backend)||"");
+    $("stats").textContent = JSON.stringify(d,null,2);
+  }catch(e){ $("health").textContent="API off"; $("stats").textContent=String(e); }
+}
+async function load(e){
+  e && e.preventDefault();
+  const base = origin();
+  const q = new URLSearchParams({date:$("date").value,league:$("league").value,season:$("season").value,min_edge:$("edge").value});
+  $("status").textContent="Cargando…"; $("list").innerHTML="";
+  if(!base){ $("status").textContent="Pega la URL de tu API (Worker/Render) para cargar picks."; return; }
+  try{
+    const data = await (await fetch(base+"/api/picks?"+q)).json();
+    if(data.error) throw new Error(data.error);
+    const picks=data.picks||[];
+    $("status").textContent=(data.source||"")+" · "+picks.length+" con valor";
+    if(!picks.length){ $("list").innerHTML="<p class=\"text-slate-500 text-sm\">Sin value bets. Fecha NS.</p>"; return; }
+    $("list").innerHTML=picks.map(p=>`<article class="glass rounded-2xl p-4">
+      <div class="flex justify-between text-xs text-slate-500"><span>${p.league||""}</span><span>${p.status||""}</span></div>
+      <p class="text-white font-semibold">${p.home} — ${p.away}</p>
+      <div class="mt-3 grid sm:grid-cols-3 gap-2">${(p.value_bets||[]).map(v=>`<div class="bg-black/40 rounded-xl p-3 text-sm">
+        <p class="text-emerald-400 font-semibold">${v.market} ${v.pick} @ ${v.odd}</p>
+        <p class="text-slate-400">modelo ${pct(v.p_model)} · impl ${pct(v.p_implied)}</p>
+        <p class="text-amber-300">edge ${(v.edge*100).toFixed(1)} pp</p></div>`).join("")}</div></article>`).join("");
+  }catch(err){ $("status").textContent="Sin API. "+err.message; }
+}
+$("f").addEventListener("submit", load);
+health(); load();
+</script>
+</body></html>
